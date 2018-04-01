@@ -2,24 +2,30 @@ import UIKit
 
 public class Board: UIView {
     
-    public var addPoint: ((Int) -> Void)?
+    public var addPoints: ((Int) -> Void)?
     public var hexagons = [Hexagon]()
     public var triangles = [TriangleView]()
+    public var animationInProgress: Bool {
+        get {
+            return !triangleToRemove.isEmpty
+        }
+    }
     
+    private var triangleToRemove = [TriangleView]()
+    private var positionToTriangle = [Position: TriangleView]()
     private let maxTrianglesInRow = 11
     private let numberOfRows = 6
     
-    override public init(frame: CGRect) {
-        super.init(frame: frame)
+    init() {
+        super.init(frame: .zero)
         initialize()
     }
     
     public required init?(coder aDecoder: NSCoder) {
-        super.init(coder: aDecoder)
-        initialize()
+        fatalError("init(coder:) has not been implemented")
     }
     
-    public func highlight(_ figure: Figure) {
+    public func highlight(figure: Figure) {
         for triangle in trianglesToPlace(from: figure) {
             triangle.highlight(withColor: figure.color.withAlphaComponent(0.5))
         }
@@ -31,7 +37,7 @@ public class Board: UIView {
         }
     }
     
-    public func tryPlace(_ figure: Figure) -> Bool {
+    public func tryPlace(figure: Figure) -> Bool {
         let placeableTriangles = trianglesToPlace(from: figure)
         for triangle in placeableTriangles {
             triangle.fill(withColor: figure.color)
@@ -40,10 +46,7 @@ public class Board: UIView {
         return !placeableTriangles.isEmpty
     }
     
-    var animationInProgress = false
-    
-    
-    public func canPlace(_ figure: Figure) -> Bool {
+    public func canPlace(figure: Figure) -> Bool {
         let possibleBoardPosition = getPossibleBoardPosition(forInitialTriangle: figure.initialTriangle)
         for position in possibleBoardPosition {
             if canPlace(figure: figure, on: position) {
@@ -53,43 +56,33 @@ public class Board: UIView {
         return false
     }
     
+    public func clean() {
+        triangles.forEach { $0.removeFromSuperview() }
+        positionToTriangle = [Position: TriangleView]()
+        triangles = []
+        initializeRows()
+    }
+    
     private func initialize() {
         backgroundColor = .boardBackground
         initializeRows()
         createHexagons()
-        makeBoardConstraints()
+        makeConstraints()
     }
     
     private func initializeRows() {
-        createRow(0, offset: 2)
-        createRow(1, offset: 1)
-        createRow(2, offset: 0)
-        createRow(3, offset: 0)
-        createRow(4, offset: 1)
-        createRow(5, offset: 2)
-    }
-    
-    private func createRow(_ row: Int, offset: Int) {
-        let trianglesInRow = maxTrianglesInRow - offset * 2
-        for column in 0..<trianglesInRow {
-            let position = Position(row: row, column: column + offset)
-            initilizeTriangle(at: position)
-        }
-    }
-    
-    private func initilizeTriangle(at position: Position) {
-        let triangle = TriangleView(position: position)
-        addSubview(triangle)
-        triangles.append(triangle)
-        positionToTriangle[position] = triangle
-        makeConstraints(forTriangle: triangle, position: position)
+        createRow(0, withOffset: 2)
+        createRow(1, withOffset: 1)
+        createRow(2, withOffset: 0)
+        createRow(3, withOffset: 0)
+        createRow(4, withOffset: 1)
+        createRow(5, withOffset: 2)
     }
     
     private func createHexagons() {
         for (position, triangle) in positionToTriangle {
-            if triangle.isReversed {
-                continue
-            }
+            guard !triangle.isReversed else { continue }
+            
             let topRight = Position(row: position.row, column: position.column + 2)
             let bottomRight = Position(row: position.row + 1, column: position.column + 2)
             
@@ -102,10 +95,32 @@ public class Board: UIView {
         }
     }
     
+    private func makeConstraints() {
+        translatesAutoresizingMaskIntoConstraints = false
+        heightAnchor.constraint(equalToConstant: CGFloat(6 * GameConstants.yPosition)).isActive = true
+        widthAnchor.constraint(equalToConstant: CGFloat(11 * GameConstants.xPosition) + 20).isActive = true
+    }
+    
+    private func createRow(_ row: Int, withOffset offset: Int) {
+        let trianglesInRow = maxTrianglesInRow - offset * 2
+        for column in 0..<trianglesInRow {
+            initilizeTriangle(at: Position(row: row, column: column + offset))
+        }
+    }
+    
+    private func initilizeTriangle(at position: Position) {
+        let triangle = TriangleView(position: position)
+        addSubview(triangle)
+        triangles.append(triangle)
+        positionToTriangle[position] = triangle
+        makeConstraints(forTriangle: triangle, position: position)
+    }
+    
     private func makeConstraints(forTriangle triangle: TriangleView, position: Position) {
         let padding: CGFloat = triangle.isReversed ? GameConstants.padding : 0
         let leadingConstant = CGFloat(GameConstants.xPosition * position.column)
         let topConstant = CGFloat(GameConstants.yPosition * position.row) + padding
+        
         triangle.translatesAutoresizingMaskIntoConstraints = false
         triangle.leadingAnchor.constraint(equalTo: leadingAnchor, constant: leadingConstant).isActive = true
         triangle.topAnchor.constraint(equalTo: topAnchor, constant: topConstant).isActive = true
@@ -113,11 +128,7 @@ public class Board: UIView {
         triangle.widthAnchor.constraint(equalToConstant: GameConstants.size).isActive = true
     }
     
-    private func makeBoardConstraints() {
-        translatesAutoresizingMaskIntoConstraints = false
-        heightAnchor.constraint(equalToConstant: CGFloat(6 * GameConstants.yPosition)).isActive = true
-        widthAnchor.constraint(equalToConstant: CGFloat(11 * GameConstants.xPosition) + 20).isActive = true
-    }
+    
     
     private func trianglesToPlace(from figure: Figure) -> [TriangleView] {
         guard let boardPosition = initialTrianglePosition(from: figure) else { return [] }
@@ -157,16 +168,11 @@ public class Board: UIView {
     }
     
     private func isTriangleExists(at position: Position) -> TriangleView? {
-        return triangles.first(where: { $0.position == position })
+        return positionToTriangle[position]
     }
     
     private func getMatchingHexagons(for position: Position) -> [Hexagon] {
         return hexagons.filter { $0.contains(position: position) }
-    }
-    
-    private func clearBoard() {
-        let completedHexagon = hexagons.filter { $0.isCompleted }
-        completedHexagon.forEach { removeCompleted($0) }
     }
     
     private func getPossibleBoardPosition(forInitialTriangle initialTriangle: TriangleView) -> [Position] {
@@ -184,42 +190,58 @@ public class Board: UIView {
         return true
     }
     
+    private func clearBoard() {
+        let completedHexagon = hexagons.filter { isHexagonCompleted($0) }
+        completedHexagon.forEach { removeCompleted(hexagon: $0) }
+    }
     
-    
-    var toAnimate = [TriangleView]()
-    
-    private func removeCompleted(_ hexagon: Hexagon) {
+    private func isHexagonCompleted(_ hexagon: Hexagon) -> Bool {
+        let color = positionToTriangle[hexagon.initialPosition]?.color
         for position in hexagon.positions {
-            toAnimate.append( positionToTriangle[position]!)
+            guard
+                let triangle = positionToTriangle[position],
+                triangle.isFilled,
+                triangle.color == color else {
+                    return false
+            }
         }
-        toAnimate.sort(by: {
+        return true
+    }
+    
+    private func removeCompleted(hexagon: Hexagon) {
+        for position in hexagon.positions {
+            triangleToRemove.append( positionToTriangle[position]!)
+        }
+        sortTriangleToRemove()
+        removeTriangle()
+        addPoints?(GameConstants.pointForHexagon)
+    }
+    
+    @objc private func removeTriangle() {
+        if triangleToRemove == [] {
+            return
+        }
+        let triangle = triangleToRemove.removeFirst()
+        layoutIfNeeded()
+        UIView.animate(withDuration: 0.25, delay: 0.0, animations: { [weak self] in
+            guard let `self` = self else { return }
+            
+            triangle.alpha = 0.0
+            Timer.scheduledTimer(timeInterval: 0.05, target: self, selector: #selector(self.removeTriangle), userInfo: nil, repeats: false)
+            }, completion: { _ in
+                triangle.unfill()
+                UIView.animate(withDuration: 0.05, delay: 0.0, animations: {
+                    triangle.alpha = 1.0
+                })
+        })
+    }
+    
+    private func sortTriangleToRemove() {
+        triangleToRemove.sort(by: {
             if $0.position.row == $1.position.row {
                 return $0.position.column < $1.position.column
             }
             return $0.position.row < $1.position.row
         })
-        animate()
-        addPoint?(60)
-    }
-    
-    @objc func animate() {
-        if toAnimate == [] {
-            animationInProgress = false
-            return
-        }
-        animationInProgress = true
-        let triangle = toAnimate.removeFirst()
-        layoutIfNeeded()
-        UIView.animate(withDuration: 0.25, delay: 0.0, animations: {
-            triangle.alpha = 0.0
-            Timer.scheduledTimer(timeInterval: 0.05, target: self, selector: #selector(self.animate), userInfo: nil, repeats: false)
-        }, completion: { _ in
-            triangle.unfill()
-            UIView.animate(withDuration: 0.05, delay: 0.0, animations: {
-                triangle.alpha = 1.0
-            })
-        })
-        
-        
     }
 }
