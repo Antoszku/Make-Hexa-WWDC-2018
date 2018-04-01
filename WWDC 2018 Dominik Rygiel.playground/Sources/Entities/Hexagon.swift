@@ -3,12 +3,6 @@ public struct Hexagon {
     public let initialPosition: Position
     public let positions: [Position]
     
-    var isCompleted: Bool {
-        get {
-            return isHexagonCompleted()
-        }
-    }
-    
     public init(withInitialPosition position: Position) {
         self.initialPosition = position
         self.positions = [
@@ -23,18 +17,5 @@ public struct Hexagon {
     
     public func contains(position: Position) -> Bool {
         return positions.contains(position)
-    }
-    
-    private func isHexagonCompleted() -> Bool {
-        let color = positionToTriangle[initialPosition]?.color
-        for position in positions {
-            guard
-                let triangle = positionToTriangle[position],
-                triangle.isFilled,
-                triangle.color == color else {
-                    return false
-            }
-        }
-        return true
     }
 }

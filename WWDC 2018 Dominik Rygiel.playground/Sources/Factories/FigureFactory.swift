@@ -7,3 +7,4 @@ public class FigureFactory {
         return Figure(trianglesColor: figureColors.randomElement(), forTriangleCount: Int(arc4random_uniform(5) + 1))
     }
 }
+

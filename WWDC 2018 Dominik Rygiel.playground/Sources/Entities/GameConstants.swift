@@ -1,6 +1,7 @@
 import UIKit
 
 public struct GameConstants {
+    public static let pointForHexagon = 60
     public static let size: CGFloat = 56
     public static var yPosition: Int = {
         return Int(0.99 * size)
@@ -14,6 +15,3 @@ public struct GameConstants {
         return CGFloat(Int(0.1 * size))
     }()
 }
-
-
-public var positionToTriangle = [Position: TriangleView]()

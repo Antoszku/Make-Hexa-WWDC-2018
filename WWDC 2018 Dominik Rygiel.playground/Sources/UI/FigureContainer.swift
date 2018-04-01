@@ -1,9 +1,10 @@
 import UIKit
 
-class FigureContainter: UIView {
+public class FigureContainer: UIView {
     var isEmpty: Bool {
         get {
             return subviews.isEmpty
         }
     }
 }
+

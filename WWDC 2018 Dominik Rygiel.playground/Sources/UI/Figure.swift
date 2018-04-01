@@ -41,10 +41,7 @@ public class Figure: UIView {
     }
     
     public required init?(coder aDecoder: NSCoder) {
-        self.triangleCount = 0
-        self.color = .defaultColor
-        super.init(coder: aDecoder)
-        initialize()
+        fatalError("init(coder:) has not been implemented")
     }
     
     public func performRotation(animated: Bool = true) {
@@ -61,8 +58,7 @@ public class Figure: UIView {
         }
     }
     
-    
-    public override func copy() -> Any {
+    override public func copy() -> Any {
         return Figure(trianglesColor: color, forTriangleCount: triangleCount)
     }
     
@@ -93,7 +89,6 @@ public class Figure: UIView {
         }
     }
     
-    
     private func makeConstraints(for triangle: TriangleView, at index: Int) {
         triangle.translatesAutoresizingMaskIntoConstraints = false
         let leadingConstant = CGFloat(GameConstants.xPosition * (index % 3))
@@ -112,3 +107,4 @@ public class Figure: UIView {
         triangle.widthAnchor.constraint(equalToConstant: GameConstants.size).isActive = true
     }
 }
+

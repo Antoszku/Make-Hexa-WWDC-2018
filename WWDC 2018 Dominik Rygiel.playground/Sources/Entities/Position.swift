@@ -1,5 +1,3 @@
-// TODO DO I NEED HASHABLE?
-
 public struct Position: Hashable {
     
     public private(set) var row: Int

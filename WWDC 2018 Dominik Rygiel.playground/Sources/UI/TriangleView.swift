@@ -38,10 +38,8 @@ public class TriangleView: UIView {
         initialize()
     }
     
-    required public init?(coder aDecoder: NSCoder) {
-        self.position = Position(row: 0, column: 0)
-        super.init(coder: aDecoder)
-        initialize()
+    public required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
     }
     
     override public func draw(_ rect: CGRect) {
@@ -106,3 +104,4 @@ public class TriangleView: UIView {
         transform = CGAffineTransform(rotationAngle: angle)
     }
 }
+

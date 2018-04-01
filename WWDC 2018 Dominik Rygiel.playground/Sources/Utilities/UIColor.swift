@@ -11,3 +11,4 @@ extension UIColor {
     static var boardBackground = UIColor(red: 11 / 255, green: 18 / 255, blue: 38 / 255, alpha: 1)
     public static var defaultColor = UIColor(red: 49 / 255, green: 57 / 255, blue: 80 / 255, alpha: 1)
 }
+
